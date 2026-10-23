@@ -1,0 +1,36 @@
+{
+  "name": "findmywalk",
+  "version": "0.1.0",
+  "description": "A one-page coming soon holding page for Find My Walk.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@types/geojson": "^7946.0.16",
+    "fast-xml-parser": "^5.11.2",
+    "lucide-react": "^1.61.0",
+    "maplibre-gl": "^6.15.0",
+    "next": "^16.4.2",
+    "pg": "^8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
