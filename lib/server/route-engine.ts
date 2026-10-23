@@ -23,7 +23,10 @@ export async function routePedestrian(waypoints:Coordinate[],timeoutMs=12000,sig
    body:JSON.stringify({locations:waypoints.map(([lon,lat])=>({lon,lat})),costing:'pedestrian',units:'kilometers',directions_options:{units:'kilometers'}}),
    signal:controller.signal,cache:'no-store'
   });
-  if(!response.ok)throw new ApiError(422,'Pedestrian routing could not connect these waypoints.','NO_PEDESTRIAN_ROUTE');
+  if(!response.ok){
+   if(response.status>=500||response.status===429)throw new ApiError(503,'Pedestrian routing is temporarily unavailable.','ROUTING_UNAVAILABLE');
+   throw new ApiError(422,'Pedestrian routing could not connect these waypoints.','NO_PEDESTRIAN_ROUTE');
+  }
   const data=JSON.parse(await limitedText(response as unknown as Request,6_000_000));
   const trip=data?.trip,legs=trip?.legs;
   if(!Array.isArray(legs)||!Number.isFinite(trip?.summary?.length)||!Number.isFinite(trip?.summary?.time))throw new Error('Invalid routing response');

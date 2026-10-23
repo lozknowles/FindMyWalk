@@ -79,7 +79,8 @@ describe('generated route exports', () => {
     expect(streams).toHaveLength(2);
     expect(streams[0][2]).toContain('Additional place notes follow');
     expect(streams[0][2]).not.toContain('Also in Collingham');
-    expect(streams[1][2]).toContain('Beyond Coffee; The Allotment');
+    expect(streams[1][2]).toContain('Beyond Coffee');
+    expect(streams[1][2]).toContain('Allotment');
     expect(streams[1][2]).toContain('No mapped places found');
     const firstPageNotes = [...streams[0][2].matchAll(/40 (\d+) Td \([^)]*(?:cafes \/ food|Proximity|Results may|Map source|mapped places found)[^)]*\)/g)];
     expect(firstPageNotes.every(match => Number(match[1]) >= 91)).toBe(true);
@@ -168,23 +169,24 @@ describe('generated route exports', () => {
         { id:'osm:five',name:'Pub Five',lat:53.105,lng:-.745,category:'pub' },
       ],
       nearbyPlaces: [
-        { id:'collingham:beyond-coffee',name:'Beyond Coffee',lat:53.145808,lng:-.76015,address:'High Street, Collingham',positionQuality:'approximate' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/beyond',statusNote:'Confirm entrance and opening.' },
-        { id:'collingham:the-allotment',name:'The Allotment',lat:53.14502,lng:-.749303,address:'Gusto House, Collingham',positionQuality:'site' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/allotment',statusNote:'Site point, not entrance.' },
+        { id:'collingham:beyond-coffee',name:'Beyond Coffee',lat:53.145808,lng:-.76015,address:'High Street, Collingham',positionQuality:'mapped' as const,detourMeters:480,detourMinutes:6,sourceUrl:'https://docs.overturemaps.org/guides/places/',statusNote:'Confirm entrance and opening.' },
+        { id:'collingham:the-allotment',name:'The Allotment',lat:53.14502,lng:-.749303,address:'Gusto House, Collingham',positionQuality:'mapped' as const,detourMeters:1500,detourMinutes:19,sourceUrl:'https://docs.overturemaps.org/guides/places/',statusNote:'Site point, not entrance.' },
       ],
     } };
     const standard=await generatedPdfBlob(withLocal).text();
     const satellite=await generatedPdfBlob(withLocal,image).text();
     expect(standard).toContain('0 cafes / food');
-    expect(standard).toContain('Beyond Coffee; The Allotment');
-    expect(satellite).toContain('Other Collingham cafe listings');
+    expect(standard).toContain('Beyond Coffee');
+    expect(standard).toContain('Allotment');
+    expect(satellite).toContain('Nearby food and drink walking detours');
     expect(satellite).toContain('Not numbered on the satellite map');
     expect(satellite).toContain('Beyond Coffee');
-    expect(satellite).toContain('The Allotment');
+    expect(satellite).toContain('Allotment');
     expect(satellite).toContain('Confirm entrance and opening.');
-    expect(satellite).toContain('Collingham listings continued');
-    const continuation = satellite.slice(satellite.indexOf('Collingham listings continued'));
+    expect(satellite).toContain('nearby detours continued');
+    const continuation = satellite.slice(satellite.indexOf('nearby detours continued'));
     expect(continuation.slice(0, continuation.indexOf('endstream'))).not.toContain('Numbering matches the satellite map');
-    expect(continuation).toContain('The Allotment');
+    expect(continuation).toContain('Allotment');
   });
   it('supports precomposed adapter imagery, guide planning box, and only a verified saved-page QR', async () => {
     const image: GeneratedSatelliteImage = {

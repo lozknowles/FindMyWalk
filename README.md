@@ -22,7 +22,7 @@ The local Valhalla example builds a Nottinghamshire OSM extract in a dedicated D
 
 ## Automatic walks and mapped facilities
 
-The Create page generates one to five circular pedestrian walks of different target lengths from a chosen start. Each result uses a routed geometry and offers GPX and PDF downloads. An optional walk-guide format adds a planning panel; when a walk is saved and shared by link, its guide can include a QR code for the saved webpage. With a server-side ArcGIS Static Maps key, Satellite PDF adds an attributed imagery map on physical page 3, the route and numbered mapped places, followed by a contact-details table. Selecting a result opens it in the existing map editor for changes and saving. The map and route panel show mapped pubs, cafés and landmarks within a 100 m corridor of the current route, with OSM coverage and source date. The importer retains explicit OSM phone, website and email fields where mapped; it does not infer contact details. Proximity does not establish access, opening, or a safe detour.
+The Create page generates one to five circular pedestrian walks of different target lengths from a chosen start. Each result uses a routed geometry and offers GPX and PDF downloads. An optional walk-guide format adds a planning panel; when a walk is saved and shared by link, its guide can include a QR code for the saved webpage. With a server-side ArcGIS Static Maps key, Satellite PDF adds an attributed imagery map on physical page 3, the route and numbered mapped places, followed by a contact-details table. Selecting a result opens it in the existing map editor for changes and saving. The map and route panel show OpenStreetMap pubs, cafés and landmarks within a 100 m corridor of the current route, with OSM coverage and source date. A separate programmatic search of OSM and Overture Maps food-and-drink points shortlists within 1.2 km, deduplicates, and checks a pedestrian out-and-back detour. Suggested extra distance and time are separate from the walk length; the mapped point may not be the entrance. The importer retains explicit OSM phone, website and email fields where mapped; it does not infer contact details. Proximity does not establish access, opening, or a safe detour.
 
 ## Deployment
 
@@ -33,3 +33,14 @@ See [architecture decision](docs/adr-001-foundation.md) for code reuse and licen
 ## Visual asset
 
 `public/landscape-hero.jpg` is [Track in the Peak District - 10 June 2025](https://commons.wikimedia.org/wiki/File:Track_in_the_Peak_District_-_10_June_2025.jpg) by Aethonatic, CC0. The earlier illustrated asset remains in the source repository for reference.
+
+### Additional places index
+
+The two Collingham cafés are **not named in application code**. `db/007_overture_places.sql` defines an independently attributed regional place index. `scripts/import-overture-places.py` atomically imports food and pub features with Overture IDs, categories, location, confidence, status, source release and observation time. It rejects confidence below 0.80 and permanently closed records. It reads the official CLI's GeoJSON and `.state` file, and requires `DATABASE_URL` and `psycopg`. Example (run on hpubuntu after the migration):
+
+```sh
+overturemaps download --type=place --bbox=-1.45,52.75,-0.55,53.57 -f geojson -o nottinghamshire-places.geojson
+python scripts/import-overture-places.py --geojson nottinghamshire-places.geojson --state nottinghamshire-places.geojson.state
+```
+
+Refresh from a new release after checking data quality. Imports replace the secondary index in one database transaction; a failed import retains the previous release. The app exposes the release and an unavailable/partial status. Overture positions and operating status are provider evidence, not proof of an entrance, current opening or legal access. Detours use the pedestrian routing service and never change the main GPX line. [Overture data and licensing](https://docs.overturemaps.org/attribution/); full applicable licence texts, Foursquare NOTICE and transformation note are served at `/data-licenses`. The importer retains row-level source provenance. The API may return partial or unavailable for routing failure, out-of-coverage routes or candidate truncation. Suggestions are limited to a routed return detour of 2 km extra walking.

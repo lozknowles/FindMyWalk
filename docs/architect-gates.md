@@ -165,3 +165,25 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** architect confirmed the narrow correction: supplemental overflow pages now have a Collingham-specific heading and uncertainty footer; numbered OSM continuation pages retain their own wording. The targeted overflow regression, 90 tests, TypeScript and build passed. No material blocker remained.
 
 **Decision:** deploy a follow-up image and inspect the live satellite PDF continuation page. The initial release remains live while this label is corrected.
+
+## Plan gate: programmatic nearby food and drink detours
+
+**Trigger:** the user rejected the two hardcoded Collingham café records and expected route-based discovery that allows a normal short walk for coffee.
+
+**Finding:** the architect rejected merely moving the two names into another endpoint. It required a general geographic provider index, source metadata and deduplication, pedestrian detour calculation, separate confidence/freshness and unavailable states. The current OSM extract and Collingham public verified guide omit both cafés. A source qualification check found both, plus other regional venues, in Overture Maps release `2026-10-21.0` through a bounded category-and-location query. Their confidence is above 0.80; one has reported `open` status, which is not presented as a current opening guarantee.
+
+**Decision:** import the official Overture food/pub theme into a separate PostGIS index, retain OSM route-corridor counts, discover OSM and Overture food candidates by location and category, deduplicate them, and calculate a bounded Valhalla out-and-back walking detour. Map, editor, generated cards and PDFs share the response. Fixed café source records are removed. The original GPX geometry remains unchanged; entrances, access and opening remain unverified. This is a Nottinghamshire beta source, not global coverage.
+
+**Candidate evidence:** 4,528 food/pub points imported into the isolated development index from the official release. A representative Collingham API route returned Beyond Coffee at +658 m and The Allotment at +1,544 m extra walking; a Newark route returned unrelated cafés through the same code. A duplicate-ID import failed atomically and preserved all 4,528 rows. Unit, browser, visual, completion and live checks are tracked separately below.
+
+## Plan and completion gates: programmatic nearby food and drink
+
+**Trigger:** the user identified missing Collingham cafés and required genuinely location-based discovery with a normal short walking diversion. This crosses imported place data, routing, generated walks, map cards and PDF exports.
+
+**Plan finding:** the architect rejected venue-name exceptions. It recommended a bounded geographic place index, explicit source age and uncertainty, deduplication by identity, and a separately routed pedestrian diversion. The primary chose the official Overture Places release as a secondary index alongside OSM and retained the existing 100 m route-corridor count.
+
+**Completion finding, first pass (HOLD):** the architect found five material gaps: routing failures could appear as zero results, five generated walks could overload Valhalla beyond the request budget, name overlap could remove distinct businesses, outbound distance was doubled without routing the return, and source licences/notices were incomplete. It also required a visible diversion allowance. The primary fixed each: shared three-slot abortable routing queue with an eight-second enrichment budget, transport-level 429/5xx classification and partial/truncated state, strict nearby name matching, complete entry–venue–entry routing with snap checks, full source provenance and public licence texts/NOTICE, and a stated 2 km extra-walking ceiling. No venue names are embedded in application or importer code.
+
+**Completion finding, second pass (HOLD):** cancellation did not yet remove queued acquisitions, and the real router converted every upstream HTTP error to an unreachable venue. The primary made queue acquisition abortable and classified 429/5xx as routing unavailable at the transport boundary. Regression tests exercise queued cancellation, no late dispatch, retained partial successes, and real router HTTP statuses.
+
+**Completion verdict (PASS):** the architect found no remaining material blocker after those corrections, subject to build, CI and live acceptance. Evidence: 100 Vitest tests, one Python importer unit, TypeScript check, production build, candidate five-walk browser smoke, Collingham candidate response containing both missing cafés from a 4,528-row release index, and a non-Collingham geographic response. The imported release is `2026-10-21.0`; input GeoJSON SHA-256 is `ffdac2d3f22c3c551a3d4c93c489004d088d29ec1edf4ef5a4d64e4f45491b0c`; state-file SHA-256 is `b84ccc884486d6b47c04ae708cd31b13f01362f774de1d792e54df4a8d3a0f82`. Public HTTPS acceptance and production migration remain release gates.

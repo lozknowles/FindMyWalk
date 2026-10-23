@@ -16,7 +16,7 @@ export async function POST(request:Request){
   const lngs=points.map(p=>p[0]),lats=points.map(p=>p[1]);
   if(Math.max(...lngs)-Math.min(...lngs)>.2||Math.max(...lats)-Math.min(...lats)>.2)
    throw new ApiError(400,'This route is wider than the current local discovery area.','INVALID_ROUTE');
-  return Response.json(await routeFacilities(points),{headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'}});
+  return Response.json(await routeFacilities(points,100,request.signal),{headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'}});
  }catch(error){return failure(error)}
  finally{release?.()}
 }

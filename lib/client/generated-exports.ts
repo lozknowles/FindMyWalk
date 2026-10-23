@@ -36,7 +36,10 @@ export interface GeneratedExportPlace {
   address?: string;
   sourceUrl?: string;
   statusNote?: string;
-  positionQuality?: 'approximate' | 'site';
+  positionQuality?: 'mapped';
+  detourMeters?: number;
+  detourMinutes?: number;
+  sourceRelease?: string;
   verifiedAt?: string;
 }
 export interface GeneratedExportRoute {
@@ -51,6 +54,8 @@ export interface GeneratedExportRoute {
   facilities?: {
     places?: GeneratedExportPlace[];
     nearbyPlaces?: GeneratedExportPlace[];
+    nearbyRelease?: string | null;
+    nearbyStatus?: 'available' | 'partial' | 'unavailable';
     counts: { pub: number; cafe: number; landmark: number };
     sourceTimestamp?: string | null;
     coverage?: 'full' | 'partial';
@@ -72,7 +77,9 @@ function facilitySummary(route: GeneratedExportRoute): string[] {
     if (!Number.isNaN(date.getTime())) result.push('Map source date: ' + date.toISOString().slice(0, 10) + '.');
   }
   if (facilities.coverage === 'partial' || facilities.truncated) result.push('Results may be incomplete (limited map coverage or results).');
-  if (facilities.nearbyPlaces?.length) result.push('Also in Collingham (approximate guide locations, not counted as route facilities): ' + facilities.nearbyPlaces.map(place => place.name).join('; ') + '. Check opening and access.');
+  if (facilities.nearbyStatus === 'unavailable') result.push('Additional walking-detour places unavailable.');
+  if (facilities.nearbyStatus === 'partial') result.push('Additional place suggestions may be incomplete (coverage, routing or candidate limit).');
+  if (facilities.nearbyPlaces?.length) result.push('Overture Maps places release ' + (facilities.nearbyRelease || 'unknown') + '; data notices and licence texts: findmywalk.com/data-licenses. Nearby food and drink with routed return walking detours up to 2 km extra (not in the walk length): ' + facilities.nearbyPlaces.map(place => place.name + ' (+' + place.detourMeters + ' m)').join('; ') + '. Check entrance and opening.');
   if (pub + cafe + landmark === 0) result.push('No mapped places found; facilities may still exist.');
   return result;
 }
@@ -349,13 +356,13 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
     const supplementalHeader = () => {
       commands.length = 0;
       supplementalPage = true;
-      text('FindMyWalk / Collingham listings continued', 40, 800, 18);
-      text('Approximate guide positions; not numbered on the satellite map.', 40, 777, 10);
+      text('FindMyWalk / nearby detours continued', 40, 800, 18);
+      text('Nearby mapped places; detours are not included in the walk length.', 40, 777, 10);
       tableY = 750;
     };
     const footer = () => {
       wrap(proximity, 85).forEach((line, i) => text(line, 40, 78 - i * 11, 8));
-      text(supplementalPage ? 'Guide listings; entrance, access and opening are unverified.' :
+      text(supplementalPage ? 'Mapped detours; entrance, access and opening are unverified.' :
         'Contacts are mapped source data; availability and opening are unverified.', 40, 49, 8);
       text(attribution, 40, 32, 8);
     };
@@ -383,15 +390,18 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
     const supplemental = route.facilities?.nearbyPlaces || [];
     if (supplemental.length) {
       if (tableY < 175) { footer(); addPage(); supplementalHeader(); }
-      text('Other Collingham cafe listings - approximate positions', 40, tableY, 10);
+      text('Nearby food and drink walking detours', 40, tableY, 10);
       tableY -= 16;
-      text('Not numbered on the satellite map or included in the 100 m route count.', 40, tableY, 8);
+      text('Not numbered on the satellite map or included in the walk length.', 40, tableY, 8);
       tableY -= 16;
       for (const place of supplemental) {
         const lines = [
-          place.name + (place.address ? ' - ' + place.address : ''),
-          place.statusNote || 'Location and opening should be checked.',
-          'Source checked ' + (place.verifiedAt || 'date unavailable') + ': ' + (place.sourceUrl || 'Collingham village guide'),
+          place.name + ' - +' + (place.detourMeters || 0) + ' m / about ' + (place.detourMinutes || 0) + ' min routed return',
+          place.address || 'Address not mapped',
+          place.phone ? 'Phone: ' + place.phone : 'Phone: not mapped',
+          place.website ? 'Web: ' + place.website : 'Web: not mapped',
+          place.statusNote || 'Mapped position; check entrance and opening.',
+          'Source: ' + (place.sourceUrl || 'OpenStreetMap') + (place.sourceRelease ? ' / release ' + place.sourceRelease : ''),
         ].flatMap(line => wrap(line, 84));
         if (tableY < 110 + Math.min(lines.length - 1, 54) * 11) { footer(); addPage(); supplementalHeader(); }
         for (const line of lines) {
