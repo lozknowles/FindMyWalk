@@ -2,7 +2,7 @@
 
 ## Decision
 
-Build an independent Next.js/TypeScript application with a single PostgreSQL/PostGIS database. Keep walking geometry, route persistence, routing, places, transport and publication behind separate modules inside one deployable application. Use MapLibre GL JS with OpenFreeMap tiles and visible OSM/OpenMapTiles attribution. A dedicated Valhalla pedestrian service is the intended production routing dependency; the public Valhalla demo is development only.
+Build an independent Next.js/TypeScript application with a single PostgreSQL/PostGIS database. Keep walking geometry, route persistence, routing, places, transport and publication behind separate modules inside one deployable application. Use MapLibre GL JS with OpenFreeMap tiles and visible OSM/OpenMapTiles attribution. An isolated local Valhalla service initially builds a Nottinghamshire OSM extract. A regional or global production routing graph needs an explicit capacity and coverage plan.
 
 Each saved route has ordered waypoint IDs, GeoJSON WGS84 geometry, distance in metres, duration in minutes, owner, visibility and revision. A published walk must not expose a private draft. Browser authorization and spatial data validation are server responsibilities.
 

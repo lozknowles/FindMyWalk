@@ -15,5 +15,18 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+  routing:
+    profiles: ["routing"]
+    image: ghcr.io/valhalla/valhalla-scripted:latest
+    restart: unless-stopped
+    environment:
+      tile_urls: https://download.geofabrik.de/europe/united-kingdom/england/nottinghamshire-latest.osm.pbf
+      server_threads: 2
+      build_elevation: "False"
+    ports:
+      - "127.0.0.1:18082:8002"
+    volumes:
+      - findmywalk-valhalla:/custom_files
 volumes:
   findmywalk-postgres:
+  findmywalk-valhalla:

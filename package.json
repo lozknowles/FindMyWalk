@@ -7,7 +7,9 @@
     "test": "vitest run",
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
-    "start": "next start --hostname 0.0.0.0"
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "docker compose exec -T db psql -v ON_ERROR_STOP=1 -U findmywalk -d findmywalk < db/001_initial.sql"
   },
   "keywords": [],
   "author": "",

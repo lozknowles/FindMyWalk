@@ -8,11 +8,11 @@ FindMyWalk is an independent walking-route builder and discovery application. Th
 
 1. Install Node 24 and Docker with Compose.
 2. Copy `.env.example` to `.env.local`, replace the database password and session secret, and set `POSTGRES_PASSWORD` in the shell or a private Compose `.env` file.
-3. Run `docker compose up -d db`.
+3. Run `docker compose --profile routing up -d db routing` and wait for routing graph build. The example extract covers Nottinghamshire only; outside coverage, pedestrian routing returns unavailable.
 4. Run the SQL migrations in `db/` (see the migration files), then `npm ci` and `npm run dev`.
 5. Open the localhost development port. Do not point live DNS at it.
 
-The example Valhalla URL is a rate-limited public demo for development. Public deployment needs an owned or contracted pedestrian routing service. The MapLibre style uses OpenFreeMap; keep attribution visible. Open-data facilities and transit stops are not proof of current opening hours, accessibility, timetable or service operation.
+The local Valhalla example builds a Nottinghamshire OSM extract in a dedicated Docker volume. Widen coverage with an appropriate extract and capacity plan before public launch. The MapLibre style uses OpenFreeMap; keep attribution visible. Open-data facilities and transit stops are not proof of current opening hours, accessibility, timetable or service operation.
 
 ## Provider configuration
 
