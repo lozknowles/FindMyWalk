@@ -157,3 +157,11 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** architect found a material PDF overflow: longer facility notes could collide with the page-one footer. The primary moved complete excess notes to an appendix after guide pages, preserving physical page three for satellite imagery. Architect then returned PASS for this narrow correction with no further material blocker, requiring representative live acceptance after deployment.
 
 **Decision:** ship only after CI and live checks. The revised candidate passed 90 Vitest tests, TypeScript, build, mobile five-walk browser smoke, representative route API, and rendered zero-count/partial PDF edge pages. Source links, positional uncertainty and exact mapped route counts remain distinct; current entrances and opening are unverified.
+
+## Completion gate: Collingham guide continuation wording
+
+**Trigger:** the first live satellite PDF placed The Allotment on page four under a generic mapped-place heading that said its number matched the map, although supplemental listings are deliberately unnumbered.
+
+**Finding:** architect confirmed the narrow correction: supplemental overflow pages now have a Collingham-specific heading and uncertainty footer; numbered OSM continuation pages retain their own wording. The targeted overflow regression, 90 tests, TypeScript and build passed. No material blocker remained.
+
+**Decision:** deploy a follow-up image and inspect the live satellite PDF continuation page. The initial release remains live while this label is corrected.
