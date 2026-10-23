@@ -17,7 +17,8 @@ try{
  await page.locator('#auto-count').fill('1');
  const generated=page.waitForResponse(r=>r.url().endsWith('/api/generate'));
  await page.getByRole('button',{name:'Generate walks'}).click();
- assert.equal((await generated).status(),200);
+ const generatedResponse=await generated;assert.equal(generatedResponse.status(),200);
+ const generatedRoute=(await generatedResponse.json()).routes[0];
  const route=(await (await page.request.get(base+'/api/health')).json());
  assert.equal(route.status,'ready');
  await page.locator('.auto-results article').first().getByRole('button',{name:'Show on map'}).click();
@@ -32,6 +33,11 @@ try{
   assert.equal((await published).status(),200);
   const publicWalk=await page.request.get(base+'/walks/'+id);
   assert.equal(publicWalk.status(),200);
+  const anonymous=await browser.newContext();
+  try{const publishedRouteResponse=await anonymous.request.get(base+'/api/routes/'+id+'?published=1');assert.equal(publishedRouteResponse.status(),200);
+   const publishedRoute=(await publishedRouteResponse.json()).route;
+   assert.deepEqual(publishedRoute.geometry.coordinates,generatedRoute.geometry.coordinates,'shared route matches selected generated geometry');
+  }finally{await anonymous.close()}
   assert.equal(await page.locator('.auto-results article').count(),1,'generated card stays visible after sharing');
   const satelliteResponse=page.waitForResponse(r=>r.url().endsWith('/api/satellite')&&r.request().method()==='POST');
   const downloadPromise=page.waitForEvent('download',{timeout:15000}).catch(()=>null);
@@ -46,7 +52,8 @@ try{
   if(!download)throw new Error('Satellite rendered but no download: '+await page.locator('.auto-warning').allTextContents());
   const file='/tmp/fmw-guide-satellite-real.pdf';await download.saveAs(file);
   assert.ok((await fs.readFile(file)).subarray(0,8).toString().startsWith('%PDF-1.'));
-  console.log(JSON.stringify({status:'PASS',pdf:file,bytes:(await fs.stat(file)).size,walkUrl:base+'/walks/'+id,pageErrors:errors}));
+  assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({status:'PASS',pdf:file,bytes:(await fs.stat(file)).size,walkUrl:base+'/walks/'+id,publishedGeometryMatches:true,pageErrors:errors}));
  }finally{
   page.once('dialog',d=>d.accept());
   const del=page.waitForResponse(r=>r.url().includes('/api/routes/'+id+'?revision=')&&r.request().method()==='DELETE');

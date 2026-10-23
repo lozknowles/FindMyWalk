@@ -123,3 +123,19 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** no satellite POST was sent because the saved route URL caused the generator panel to unmount. This was editor state ownership, not provider or PDF failure.
 
 **Decision:** retain the generator for the active generated editor session at the saved URL. Rerun showed one visible card, enabled satellite action, a successful POST and a downloaded real-imagery PDF. HTTPS QR remains a separate acceptance check.
+
+## Completion gate: public automatic-walk feature
+
+**Trigger:** the source and live app had passed the generator, facility, guide and QR acceptance checks.
+
+**Finding:** architect confirmed the live image matched the reviewed Git tree and the generated QR matched the saved route, but identified a user-facing privacy disclosure gap: requesting Satellite PDF sends route and numbered-place coordinates to ArcGIS. The only required code change is a clear notice next to the action and in About/Privacy.
+
+**Decision:** added both disclosures and strengthened the browser smoke to compare the anonymous published route geometry with the selected generated route. Final live verdict awaits deployment of this disclosure revision. Provider quota/cost and OSM source currency require ongoing monitoring. This bounded feature release does not complete the wider master mission or physical AR qualification.
+
+## No-progress gate: root-owned candidate build cache
+
+**Trigger:** a second production build encountered EACCES unlinking a Next.js route-cache file.
+
+**Finding:** the configured test candidate still ran as root and kept writing root-owned files into the shared .next build output. Repeating ownership repair while it ran treated the symptom.
+
+**Decision:** stopped the dedicated candidate process group, resolved the .next path within the isolated workspace, restored ownership only there and reran the build as loz. Build passed; port 3113 is closed and no root-owned .next files remain. Future configured candidates must drop to loz or use a separate build artifact.
