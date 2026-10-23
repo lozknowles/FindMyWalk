@@ -139,3 +139,13 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** the configured test candidate still ran as root and kept writing root-owned files into the shared .next build output. Repeating ownership repair while it ran treated the symptom.
 
 **Decision:** stopped the dedicated candidate process group, resolved the .next path within the isolated workspace, restored ownership only there and reran the build as loz. Build passed; port 3113 is closed and no root-owned .next files remain. Future configured candidates must drop to loz or use a separate build artifact.
+
+## Plan gate: Collingham café listings correction
+
+**Trigger:** the live Create page showed zero cafés for the user's Collingham walk despite Beyond Coffee and The Allotment being known locally. The OSM route index and Collingham guide have different provenance and position quality.
+
+**Finding:** architect found neither venue in the 20 October OSM extract. Widening the route corridor alone would not discover them. It recommended reviewed local records with stable IDs, dates, source links and position uncertainty, separate from the 100 m OSM route count; deduplication must use name, type and spatial evidence.
+
+**Decision:** add two source-backed supplemental Collingham listings to the geographic discovery response. Keep the mapped-route count and numbered satellite markers tied to the precise OSM corridor. Show the supplemental places separately in the editor, generated cards and exports, label their positions approximate/site-level, and avoid promising access or current opening. The records persist across OSM reimports.
+
+**Candidate evidence:** the isolated hpubuntu branch passed 89 Vitest tests, TypeScript check and production build. A representative Collingham API route returned two OSM pubs, zero OSM cafés within 100 m and both supplemental listings. The mobile browser smoke generated five walks, showed both cafés separately, and downloaded GPX and PDF without overflow or page errors. Completion gate and live acceptance are pending.

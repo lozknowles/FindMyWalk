@@ -23,3 +23,29 @@ describe('mapped route contacts',()=>{
   expect(result.places[0]).toMatchObject({phone:null,website:null,email:null});
  });
 });
+
+describe('reviewed Collingham cafe listings',()=>{
+ const route:[number,number][]=[[-.76047,53.14499],[-.7608,53.14336]];
+ it('shows both cafes separately without inflating the 100 m OSM count',async()=>{
+  query.mockResolvedValueOnce({rows:[{...feature,name:'Royal Oak',category:'pub',lat:53.144991,lng:-.760471,distance_m:13}]})
+   .mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
+  const result=await routeFacilities(route);
+  expect(result.counts).toMatchObject({pub:1,cafe:0});
+  expect(result.nearbyPlaces?.map(place=>place.name)).toEqual(['Beyond Coffee','The Allotment']);
+  expect(result.nearbyPlaces?.map(place=>place.positionQuality)).toEqual(['approximate','site']);
+  expect(result.nearbyPlaces?.every(place=>place.source==='collingham-guide'&&Boolean(place.sourceUrl))).toBe(true);
+  expect(result.places).toHaveLength(1);
+ });
+ it('suppresses a local listing when the same cafe is mapped at the same site',async()=>{
+  query.mockResolvedValueOnce({rows:[{...feature,name:'Beyond Coffee',category:'cafe',lat:53.145808,lng:-.76015,distance_m:55}]})
+   .mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
+  const result=await routeFacilities(route);
+  expect(result.counts.cafe).toBe(1);
+  expect(result.nearbyPlaces?.map(place=>place.name)).toEqual(['The Allotment']);
+ });
+ it('does not show Collingham listings on a route elsewhere',async()=>{
+  query.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
+  const result=await routeFacilities([[-1.2,53.1],[-1.19,53.11]]);
+  expect(result.nearbyPlaces).toEqual([]);
+ });
+});

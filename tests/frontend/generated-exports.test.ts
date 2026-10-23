@@ -53,7 +53,7 @@ describe('generated route exports', () => {
     for (const blob of [generatedPdfBlob(withPlaces), generatedGpxBlob(withPlaces)]) {
       const content = await blob.text();
       expect(content).toContain('Mapped places near this walk');
-      expect(content).toContain('2 pubs; 3 cafes / food; 1 landmarks.');
+      expect(content).toContain('2 pubs; 3 cafes / food; 1 landmarks mapped within 100 m');
       expect(content).toContain('2026-10-22');
       expect(content).toContain('Proximity does not establish access');
       expect(content).toContain('opening hours');
@@ -64,6 +64,25 @@ describe('generated route exports', () => {
     expect(noPlaces).toContain('facilities may');
     expect(noPlaces).not.toContain('Map source date');
     expect(await generatedPdfBlob(route).text()).toContain('Nearby mapped places unavailable.');
+  });
+  it('keeps long zero-count place notes clear of the first-page footer', async () => {
+    const pdf = await generatedPdfBlob({ ...route, facilities: {
+      counts: { pub: 0, cafe: 0, landmark: 0 }, sourceTimestamp: '2026-10-20T20:23:47Z',
+      coverage: 'partial', truncated: true,
+      nearbyPlaces: [
+        { id: 'local:one', name: 'Beyond Coffee', category: 'cafe', lat: 53.1458, lng: -0.7601, address: 'High Street, Collingham', sourceUrl: 'https://example.test/one', verifiedAt: '2026-10-23', statusNote: 'Check opening.' },
+        { id: 'local:two', name: 'The Allotment', category: 'cafe', lat: 53.145, lng: -0.7493, address: 'Green Way, Collingham', sourceUrl: 'https://example.test/two', verifiedAt: '2026-10-23', statusNote: 'Check opening.' },
+      ],
+    } }).text();
+    expect(pdf).toContain('/Count 2');
+    const streams = [...pdf.matchAll(/\/Length (\d+) >>\nstream\n([\s\S]*?)endstream/g)];
+    expect(streams).toHaveLength(2);
+    expect(streams[0][2]).toContain('Additional place notes follow');
+    expect(streams[0][2]).not.toContain('Also in Collingham');
+    expect(streams[1][2]).toContain('Beyond Coffee; The Allotment');
+    expect(streams[1][2]).toContain('No mapped places found');
+    const firstPageNotes = [...streams[0][2].matchAll(/40 (\d+) Td \([^)]*(?:cafes \/ food|Proximity|Results may|Map source|mapped places found)[^)]*\)/g)];
+    expect(firstPageNotes.every(match => Number(match[1]) >= 91)).toBe(true);
   });
   it('paginates every supplied direction and its full text with valid PDF offsets', async () => {
     const directions = Array.from({ length: 30 }, (_, i) => ({ instruction: i === 0 ? 'Turn left (signed footpath)' : 'Continue straight on the mapped path. '.repeat(12) + 'Unique instruction tail ' + i, lengthMeters: 120 + i }));
@@ -134,6 +153,28 @@ describe('generated route exports', () => {
     const noDirectionsPdf = await generatedPdfBlob(route, image).text();
     expect(noDirectionsPdf).toContain('/Count 3');
     expect(noDirectionsPdf).toContain('Turn instructions are unavailable');
+  });
+  it('keeps approximate village cafes outside precise counts and satellite numbering', async () => {
+    const image: GeneratedSatelliteImage = {
+      jpegBytes: new Uint8Array(readFileSync(new URL('./fixtures/satellite-fixture.jpg', import.meta.url))),
+      width: 600, height: 400, precomposed: true, attribution: 'Fixture satellite provider',
+    };
+    const withLocal = { ...route, facilities: {
+      counts: { pub: 2, cafe: 0, landmark: 0 }, places: [],
+      nearbyPlaces: [
+        { id:'collingham:beyond-coffee',name:'Beyond Coffee',lat:53.145808,lng:-.76015,address:'High Street, Collingham',positionQuality:'approximate' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/beyond',statusNote:'Confirm entrance and opening.' },
+        { id:'collingham:the-allotment',name:'The Allotment',lat:53.14502,lng:-.749303,address:'Gusto House, Collingham',positionQuality:'site' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/allotment',statusNote:'Site point, not entrance.' },
+      ],
+    } };
+    const standard=await generatedPdfBlob(withLocal).text();
+    const satellite=await generatedPdfBlob(withLocal,image).text();
+    expect(standard).toContain('0 cafes / food');
+    expect(standard).toContain('Beyond Coffee; The Allotment');
+    expect(satellite).toContain('Other Collingham cafe listings');
+    expect(satellite).toContain('Not numbered on the satellite map');
+    expect(satellite).toContain('Beyond Coffee');
+    expect(satellite).toContain('The Allotment');
+    expect(satellite).toContain('Confirm entrance and opening.');
   });
   it('supports precomposed adapter imagery, guide planning box, and only a verified saved-page QR', async () => {
     const image: GeneratedSatelliteImage = {
