@@ -30,9 +30,15 @@ describe('anonymous owner authority',()=>{
  it('locks the owner before checking aggregate quota and rolls back over-limit writes',async()=>{
   query.mockImplementation(async(sql:string)=>({rows:sql.startsWith('SELECT COUNT')?[{count:25,points:50}]:[]}));
   await expect(save(input,who)).rejects.toMatchObject({status:429,code:'OWNER_STORAGE_LIMIT'});
-  expect(query.mock.calls.map(c=>c[0]).slice(0,3)).toEqual(['BEGIN','SELECT pg_advisory_xact_lock(hashtextextended($1,0))',expect.stringContaining('SELECT COUNT')]);
+  expect(query.mock.calls.map(c=>c[0]).slice(0,4)).toEqual(['BEGIN',"SELECT pg_advisory_xact_lock(hashtextextended('findmywalk-global-write',0))",'SELECT pg_advisory_xact_lock(hashtextextended($1,0))',expect.stringContaining('SELECT COUNT')]);
   expect(query.mock.calls.at(-1)![0]).toBe('ROLLBACK');
   expect(query.mock.calls.some(c=>c[0].startsWith('INSERT'))).toBe(false);
+ });
+ it('blocks rotating anonymous owners at the global storage budget',async()=>{
+  query.mockImplementation(async(sql:string)=>({rows:sql.startsWith('SELECT COUNT')?[sql.includes('WHERE owner_id=')?{count:0,points:0}:{count:1000,points:0}]:[]}));
+  await expect(save(input,who)).rejects.toMatchObject({status:503,code:'GLOBAL_STORAGE_LIMIT'});
+  expect(query.mock.calls.some(c=>c[0].startsWith('INSERT'))).toBe(false);
+  expect(query.mock.calls.at(-1)![0]).toBe('ROLLBACK');
  });
  it('includes published geometry in storage quotas and checks replacement snapshot before publication',async()=>{
   query.mockImplementation(async(sql:string)=>({rows:sql.startsWith('SELECT ST_NPoints')?[{points:100}]:sql.startsWith('SELECT COUNT')?[{count:24,points:249950}]:[]}));

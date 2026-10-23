@@ -1,6 +1,9 @@
 name: findmywalk-production
 services:
   db:
+    mem_limit: 2g
+    cpus: 2
+    pids_limit: 128
     image: postgis/postgis@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5
     restart: unless-stopped
     environment:
@@ -20,6 +23,9 @@ services:
       driver: json-file
       options: {max-size: "10m", max-file: "3"}
   routing:
+    mem_limit: 2g
+    cpus: 2
+    pids_limit: 128
     image: ghcr.io/valhalla/valhalla-scripted@sha256:eaad372b8ef31e3e4592c442875aeb1375fbf5aeaa0d259b469e3b46583ab10d
     restart: unless-stopped
     environment:
@@ -32,6 +38,9 @@ services:
       - routing-data:/custom_files
     logging: *logging
   app:
+    mem_limit: 768m
+    cpus: 2
+    pids_limit: 128
     image: ${FMW_IMAGE:?Set FMW_IMAGE}
     restart: unless-stopped
     depends_on:

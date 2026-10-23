@@ -1,5 +1,5 @@
 import {ApiError,coordinate,db,writesEnabled} from './core';
-import {checkOwnerQuota} from './resource-limits';
+import {checkOwnerQuota,checkGlobalQuota} from './resource-limits';
 import type {PoolClient} from 'pg';
 export type Waypoint={id:string;lat:number;lng:number;kind:string;label?:string};
 export type WalkInput={title:string;description:string;waypoints:Waypoint[];geometry:{type:'LineString';coordinates:number[][]};distanceMeters:number;durationMinutes:number;visibility:'private'|'unlisted'|'public';geometrySource?:'manual'|'walking-router'|'gpx-import'|'unknown'};
@@ -27,6 +27,7 @@ async function ownedWrite<T>(who:string,operation:(client:PoolClient)=>Promise<T
  const client=await db().connect();
  try{
   await client.query('BEGIN');
+  await client.query("SELECT pg_advisory_xact_lock(hashtextextended('findmywalk-global-write',0))");
   await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',[who]);
   const result=await operation(client);
   await client.query('COMMIT');
@@ -38,6 +39,10 @@ async function quota(client:PoolClient,who:string,id:string|null,kind:'geometry'
   "SELECT COUNT(*) FILTER (WHERE id IS DISTINCT FROM $2::uuid) AS count, COALESCE(SUM(CASE WHEN id=$2::uuid AND $3='geometry' THEN 0 ELSE ST_NPoints(geometry) END + CASE WHEN id=$2::uuid AND $3='snapshot' THEN 0 ELSE COALESCE(jsonb_array_length(published_snapshot->'geometry'->'coordinates'),0) END),0) AS points FROM walks WHERE owner_id=$1",
   [who,id,kind]);
  checkOwnerQuota(kind==='snapshot'?0:Number(rows[0].count),Number(rows[0].points),incoming);
+ const all=await client.query(
+  "SELECT COUNT(*) FILTER (WHERE id IS DISTINCT FROM $1::uuid) AS count, COALESCE(SUM(CASE WHEN id=$1::uuid AND $2='geometry' THEN 0 ELSE ST_NPoints(geometry) END + CASE WHEN id=$1::uuid AND $2='snapshot' THEN 0 ELSE COALESCE(jsonb_array_length(published_snapshot->'geometry'->'coordinates'),0) END),0) AS points FROM walks",
+  [id,kind]);
+ checkGlobalQuota(kind==='snapshot'?0:Number(all.rows[0].count),Number(all.rows[0].points),incoming);
 }
 export async function save(x:WalkInput,who:string,id?:string,rev?:number){
  if(x.visibility==='public'&&process.env.ALLOW_PUBLIC_PUBLISH!=='true')throw new ApiError(403,'Public publication is disabled in this beta. Share by unlisted link instead.','PUBLIC_PUBLISH_DISABLED');

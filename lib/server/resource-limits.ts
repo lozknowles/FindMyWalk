@@ -24,3 +24,10 @@ export function checkOwnerQuota(count:number,points:number,incomingPoints:number
  if(count>=OWNER_ROUTE_LIMIT||points+incomingPoints>OWNER_GEOMETRY_POINT_LIMIT)
   throw new ApiError(429,'This browser has reached its saved walk limit. Delete a walk or reduce its geometry before saving.','OWNER_STORAGE_LIMIT');
 }
+
+export const GLOBAL_ROUTE_LIMIT=1000;
+export const GLOBAL_GEOMETRY_POINT_LIMIT=1_000_000;
+export function checkGlobalQuota(count:number,points:number,incomingPoints:number){
+ if(count>=GLOBAL_ROUTE_LIMIT||points+incomingPoints>GLOBAL_GEOMETRY_POINT_LIMIT)
+  throw new ApiError(503,'The beta has reached its current storage capacity. New saves are temporarily unavailable.','GLOBAL_STORAGE_LIMIT');
+}

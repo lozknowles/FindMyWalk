@@ -57,3 +57,19 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** the partial master build can be released only as a clearly labelled Nottinghamshire beta. Public traffic requires a dedicated production stack and secrets, bounded routing and writes, unlisted sharing with abuse reporting, local or permitted provider search, honest AR limitations, backup/restore proof and HTTPS acceptance. The development worktree and database must not become production.
 
 **Decision:** adopted a separate production Compose stack on hpubuntu behind the existing CottageServer TLS gateway, with independent PostGIS and Valhalla volumes. The site defaults to private drafts and unlisted links; public publication is disabled by default. OpenFreeMap is used under its published public instance terms; place search uses the local OSM index. The static page is retained as the traffic rollback target. Cutover remains conditional on release-candidate tests, restore drill, completion review and external-origin checks.
+
+## No-progress gate: Docker Compose execution context
+
+**Trigger:** twice running unprivileged `docker compose -f ... config` yielded `unknown shorthand flag: 'f'`.
+
+**Finding:** `loz` does not have the Compose plugin in its Docker CLI context. The same explicit file and environment validate under `sudo -n docker compose`. This was a CLI/plugin context issue, not evidence of invalid YAML; the precise plugin discovery difference was not needed for deployment.
+
+**Decision:** use the verified privileged Compose invocation consistently, check resolved project/services/images/ports/volumes without printing secrets, and leave plugin installation alone. The production stack was already started under the privileged context; health and API checks provide readiness evidence beyond configuration parsing.
+
+## Completion gate: bounded live beta candidate
+
+**Trigger:** the candidate spans routing, database writes, anonymous sharing, AR, production infrastructure and public ingress.
+
+**Finding:** architect reviewed the final control changes and found no additional defect in the Stop sharing/Delete flow, ownership check, all-saved-walk display or expanded revocation smoke. The review required passing execution, a deployed immutable image, effective resource limits, noindex headers and browser acceptance on the public HTTPS origin before a final verdict.
+
+**Decision:** defer cutover until those checks are recorded. The full master mission remains incomplete; this gate applies to the Nottinghamshire beta release only.
