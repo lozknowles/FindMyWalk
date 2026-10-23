@@ -9,6 +9,8 @@ import hashlib
 import json
 import math
 import os
+import re
+from urllib.parse import urlsplit, urlunsplit
 from pathlib import Path
 import sys
 
@@ -46,6 +48,48 @@ def classifications(tags):
         kind = 'rail' if tags.get('train') == 'yes' else 'tram' if tags.get('tram') == 'yes' else 'bus' if tags.get('bus') == 'yes' else 'transport'
         rows.append(('transport', kind))
     return rows
+
+
+def clean_contact(value, limit):
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if not value or len(value) > limit or any(ord(c) < 32 or ord(c) == 127 for c in value):
+        return None
+    return value
+
+
+def contacts(tags):
+    # Only explicit OSM contact tags; never infer a URL, number or email.
+    def first(keys, validate):
+        for key in keys:
+            value = validate(tags.get(key))
+            if value:
+                return value
+        return None
+
+    def website(value):
+        value = clean_contact(value, 2048)
+        if not value or re.search(r'\s|[<>"\\]', value):
+            return None
+        try:
+            parsed = urlsplit(value)
+            if parsed.scheme.lower() not in {'http', 'https'} or not parsed.hostname or parsed.username is not None or parsed.password is not None:
+                return None
+            parsed.port  # Reject malformed ports.
+            return urlunsplit(parsed)
+        except ValueError:
+            return None
+
+    def email(value):
+        value = clean_contact(value, 254)
+        return value if value and re.fullmatch(r'[^\s@<>";,]+@[^\s@<>";,]+\.[^\s@<>";,]+', value) else None
+
+    return (
+        first(('phone', 'contact:phone'), lambda v: clean_contact(v, 100)),
+        first(('website', 'contact:website'), website),
+        first(('email', 'contact:email'), email),
+    )
 
 
 def read_poly(path):
@@ -88,7 +132,7 @@ class Importer(osmium.SimpleHandler):
 
     def add(self, osm_type, osm_id, tags, geometry):
         for family, category in classifications(tags):
-            self.pending.append((family, osm_type, osm_id, tags.get('name') or category.replace('_', ' ').capitalize(), category, geometry))
+            self.pending.append((family, osm_type, osm_id, tags.get('name') or category.replace('_', ' ').capitalize(), category, geometry, *contacts(tags)))
         if len(self.pending) >= 1000:
             self.flush()
 
@@ -96,9 +140,9 @@ class Importer(osmium.SimpleHandler):
         if not self.pending:
             return
         self.cursor.executemany("""
-            INSERT INTO import_pois(family,osm_type,osm_id,name,category,location)
-            VALUES(%s,%s,%s,%s,%s,ST_PointOnSurface(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(%s),4326))))
-            ON CONFLICT(family,osm_type,osm_id) DO UPDATE SET name=EXCLUDED.name, category=EXCLUDED.category,location=EXCLUDED.location
+            INSERT INTO import_pois(family,osm_type,osm_id,name,category,location,phone,website,email)
+            VALUES(%s,%s,%s,%s,%s,ST_PointOnSurface(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(%s),4326))),%s,%s,%s)
+            ON CONFLICT(family,osm_type,osm_id) DO UPDATE SET name=EXCLUDED.name, category=EXCLUDED.category,location=EXCLUDED.location,phone=EXCLUDED.phone,website=EXCLUDED.website,email=EXCLUDED.email
         """, self.pending)
         self.pending.clear()
 

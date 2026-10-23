@@ -13,7 +13,9 @@ export function createAdmission(maxPerMinute:number,maxConcurrent:number,now=Dat
  };
 }
 export function createRoutingAdmission(now=Date.now){return createAdmission(60,4,now)}
-const state=globalThis as unknown as {walkRoutingAdmission?:ReturnType<typeof createRoutingAdmission>;walkReportAdmission?:ReturnType<typeof createAdmission>;walkDiscoveryAdmission?:ReturnType<typeof createAdmission>;walkMutationAdmission?:ReturnType<typeof createAdmission>};
+const state=globalThis as unknown as {walkRoutingAdmission?:ReturnType<typeof createRoutingAdmission>;walkReportAdmission?:ReturnType<typeof createAdmission>;walkDiscoveryAdmission?:ReturnType<typeof createAdmission>;walkMutationAdmission?:ReturnType<typeof createAdmission>;walkGenerationAdmission?:ReturnType<typeof createAdmission>;walkFacilitiesAdmission?:ReturnType<typeof createAdmission>};
+export function admitFacilities(){return (state.walkFacilitiesAdmission??=createAdmission(60,3))()}
+export function admitGeneration(){return (state.walkGenerationAdmission??=createAdmission(3,1))()}
 export function admitRouting(){return (state.walkRoutingAdmission??=createRoutingAdmission())()}
 export function admitMutation(){return (state.walkMutationAdmission??=createAdmission(60,4))()}
 export function admitDiscovery(){return (state.walkDiscoveryAdmission??=createAdmission(240,8))()}

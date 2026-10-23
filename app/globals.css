@@ -13,3 +13,41 @@
 .beta-banner{padding:14px 6.5%;background:#f0f2e9;font-size:13px;line-height:1.7;border-bottom:1px solid var(--line)}.beta-banner a,.beta-guidance a,.information-page a:not(.button):not(.brand){text-decoration:underline;text-underline-offset:3px}.beta-guidance{background:#f0f2e9;font-size:12px;line-height:1.65;color:#344f3c}.beta-guidance p{margin:10px 0}.information-page{max-width:800px;margin:0 auto;padding:36px 24px 70px;line-height:1.75}.information-page .eyebrow{margin-top:40px}.information-page h1{font:400 40px/1.15 Georgia,serif}.information-page h2{font:400 26px/1.3 Georgia,serif;margin-top:32px}.information-page .button{margin-top:24px}.information-page p{overflow-wrap:anywhere}@media(max-width:760px){.header-actions .button{font-size:10px;padding:9px 7px}.planner-header{padding:0 10px}.planner-header .brand{font-size:17px}.beta-guidance{font-size:12px}.beta-banner{padding:12px 6%;font-size:12px}}
 .report-form{display:flex;flex-direction:column;gap:8px;padding:20px;background:#f0f2e9;border-radius:8px}.report-form input,.report-form textarea,.report-form select{width:100%;border:1px solid #b9c4b3;border-radius:4px;padding:10px;background:white;color:var(--ink);font:inherit}.report-form label{font-weight:600;font-size:13px;margin-top:8px}.report-form .button{align-self:flex-start;margin-top:10px}
 .owner-walk-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.owner-walk-actions button{border:1px solid #aab9a1;border-radius:5px;background:#fffefa;padding:9px 12px;font-size:12px}.owner-walk-actions .delete-walk{color:#8b3f2b;border-color:#d6b4a8}
+
+.auto-generator{display:grid;gap:10px}
+.auto-generator .section-row h2{display:flex;align-items:center;gap:8px}
+.auto-generator input[type=range]{width:100%;accent-color:#b95d39}
+.auto-generate-button{justify-content:center;width:100%}
+.auto-warning{margin:0;color:#8c3f23;font-size:.85rem;line-height:1.4}
+.auto-results{display:grid;gap:9px}
+.auto-results article{display:grid;gap:5px;padding:11px;border:1px solid #ded6c5;border-radius:11px;background:#faf7ef}
+.auto-results article.selected{border-color:#b95d39;box-shadow:0 0 0 1px #b95d39}
+.auto-results article strong{font-size:.92rem}
+.auto-results article span{font-size:.77rem;color:#5b5b50}
+.auto-results article>div{display:flex;flex-wrap:wrap;gap:6px}
+.auto-results article button{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;border:1px solid #d1c6b3;border-radius:7px;background:white;color:#233126;font-size:.75rem;cursor:pointer}
+.auto-results article button:hover,.auto-results article button:focus-visible{border-color:#b95d39}
+
+.auto-results .auto-facilities{display:flex;flex-wrap:wrap;gap:5px}
+.auto-results .auto-facilities span{display:inline-flex;align-items:center;gap:3px;padding:4px 6px;border-radius:6px;background:#e9eee7;color:#24432b;font-size:.7rem}
+.auto-facility-details{display:block;max-height:185px;overflow:auto;padding:8px;background:#fff;border:1px solid #e3dacb;border-radius:7px}
+.auto-facility-details strong{font-size:.78rem}
+.auto-facility-details ul{margin:6px 0;padding-left:18px}
+.auto-facility-details li,.auto-facility-details p{font-size:.72rem;line-height:1.4;margin:3px 0}
+.auto-facility-details small{color:#555}
+.facility-pin{display:grid;place-items:center;width:26px;height:26px;border:2px solid white;border-radius:50%;background:#355b43;color:white;box-shadow:0 1px 5px #3337;font-size:14px;cursor:pointer}
+.facility-pin.pub{background:#84504a}.facility-pin.cafe{background:#8c6a3f}.facility-pin.landmark{background:#4c6681}
+
+.nearby-facilities h2{font-size:1rem;margin:0 0 9px}
+.facility-counts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.facility-counts span{padding:4px 6px;border-radius:6px;background:#e9eee7;color:#24432b;font-size:.72rem}
+.nearby-facilities ul{list-style:none;margin:8px 0;padding:0;display:grid;gap:7px}
+.nearby-facilities li{display:grid;gap:1px;padding-bottom:5px;border-bottom:1px solid #e6e0d5}
+.nearby-facilities li strong{font-size:.78rem}
+.nearby-facilities li small{color:#585950;font-size:.72rem}
+
+.auto-directions{padding:8px;border:1px solid #e3dacb;border-radius:7px;background:white}
+.auto-directions summary{font-size:.76rem;font-weight:700;cursor:pointer}
+.auto-directions ol{max-height:180px;overflow:auto;margin:8px 0;padding-left:20px}
+.auto-directions li,.auto-directions p{font-size:.72rem;line-height:1.45;margin:4px 0}
+.auto-directions small{color:#555}
