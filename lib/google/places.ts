@@ -1,3 +1,4 @@
+import "server-only";
 /** Server-only Google Places (New) adapter. Never feed its results to MapLibre or persisted POIs. */
 export type GooglePlace = {
   id: string;
