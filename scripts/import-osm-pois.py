@@ -15,8 +15,10 @@ import sys
 import osmium
 import psycopg
 
-PLACE_AMENITIES = {'cafe', 'pub', 'toilets'}
-PLACE_TOURISM = {'attraction', 'viewpoint', 'museum'}
+PLACE_AMENITIES = {'cafe', 'pub', 'toilets', 'restaurant', 'fast_food', 'drinking_water', 'pharmacy', 'post_office', 'place_of_worship'}
+PLACE_TOURISM = {'attraction', 'viewpoint', 'museum', 'gallery', 'information'}
+LANDMARK_NATURAL = {'peak', 'hill', 'ridge', 'waterfall', 'cave_entrance'}
+LANDMARK_MAN_MADE = {'tower', 'lighthouse', 'windmill'}
 
 
 def classifications(tags):
@@ -25,6 +27,14 @@ def classifications(tags):
         rows.append(('place', tags['amenity']))
     elif tags.get('tourism') in PLACE_TOURISM:
         rows.append(('place', tags['tourism']))
+    elif tags.get('name') and tags.get('shop'):
+        rows.append(('place', 'shop'))
+    elif tags.get('name') and tags.get('historic'):
+        rows.append(('place', 'historic'))
+    elif tags.get('name') and tags.get('natural') in LANDMARK_NATURAL:
+        rows.append(('place', tags['natural']))
+    elif tags.get('name') and tags.get('man_made') in LANDMARK_MAN_MADE:
+        rows.append(('place', tags['man_made']))
     if tags.get('railway') in {'station', 'halt', 'tram_stop'}:
         rows.append(('transport', 'tram' if tags.get('railway') == 'tram_stop' else 'rail'))
     elif tags.get('highway') == 'bus_stop':

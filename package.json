@@ -1,10 +1,12 @@
 {
   "name": "findmywalk",
   "version": "0.1.0",
-  "description": "A one-page coming soon holding page for Find My Walk.",
+  "description": "Walking-route creation, discovery, sharing and approximate AR Explorer.",
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
+    "test:browser": "node tests/frontend/smoke.mjs",
+    "test:ar-browser": "node tests/ar/browser.smoke.mjs",
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",

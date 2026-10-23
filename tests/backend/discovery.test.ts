@@ -3,7 +3,7 @@ const {query}=vi.hoisted(()=>({query:vi.fn()}));
 vi.mock('../../lib/server/core',async()=>{const actual=await vi.importActual<typeof import('../../lib/server/core')>('../../lib/server/core');return {...actual,db:()=>({query})}});
 vi.mock('next/headers',()=>({cookies:vi.fn()}));
 import {places,transport} from '../../lib/server/discovery';
-const coverage={region:'Nottinghamshire',source_url:'https://download.geofabrik.de/',source_timestamp:'2026-10-22T00:00:00Z',imported_at:'2026-10-23T00:00:00Z',pbf_sha256:'abc',covered:true,overlap:true,clipped_geojson:'{"type":"Polygon","coordinates":[[[-.87,53.13],[-.85,53.13],[-.85,53.15],[-.87,53.15],[-.87,53.13]]]}'};
+const coverage={region:'Nottinghamshire',source_url:'https://download.geofabrik.de/',source_timestamp:'2026-10-22T00:00:00Z',imported_at:'2026-10-23T00:00:00Z',pbf_sha256:'abc',covered:true,overlap:true,clipped_geojson:'{"type":"Polygon","coordinates":[[[-0.87,53.13],[-0.85,53.13],[-0.85,53.15],[-0.87,53.15],[-0.87,53.13]]]}'};
 beforeEach(()=>query.mockReset());
 describe('local OSM discovery',()=>{
  it('fails explicitly when no imported index exists',async()=>{query.mockResolvedValue({rows:[]});await expect(places('-.87,53.13,-.85,53.15')).rejects.toMatchObject({status:503,code:'DISCOVERY_NOT_READY'});expect(query).toHaveBeenCalledTimes(1)});

@@ -1,11 +1,11 @@
 import {ApiError,coordinate,db} from './core';
-export type Waypoint={id:string;lat:number;lng:number;kind:string};
+export type Waypoint={id:string;lat:number;lng:number;kind:string;label?:string};
 export type WalkInput={title:string;description:string;waypoints:Waypoint[];geometry:{type:'LineString';coordinates:number[][]};distanceMeters:number;durationMinutes:number;visibility:'private'|'unlisted'|'public';geometrySource?:'manual'|'walking-router'|'gpx-import'|'unknown'};
 export function validate(x:WalkInput):WalkInput {
  if(!x||typeof x.title!=='string'||!x.title.trim()||x.title.length>160)throw new ApiError(400,'Enter a title of 1-160 characters.','INVALID_ROUTE');
  if(x.description!==undefined&&(typeof x.description!=='string'||x.description.length>10000))throw new ApiError(400,'Description is too long.','INVALID_ROUTE');
  if(!Array.isArray(x.waypoints)||x.waypoints.length<2||x.waypoints.length>200)throw new ApiError(400,'A walk needs 2-200 waypoints.','INVALID_ROUTE');
- const ids=new Set();const waypoints=x.waypoints.map(w=>{if(!w||typeof w.id!=='string'||!w.id||w.id.length>100||ids.has(w.id)||!coordinate(w.lng,w.lat))throw new ApiError(400,'Waypoints need unique IDs and valid coordinates.','INVALID_ROUTE');ids.add(w.id);return {id:w.id,lat:w.lat,lng:w.lng,kind:typeof w.kind==='string'?w.kind.slice(0,40):'waypoint'}});
+ const ids=new Set();const waypoints=x.waypoints.map(w=>{if(!w||typeof w.id!=='string'||!w.id||w.id.length>100||ids.has(w.id)||!coordinate(w.lng,w.lat))throw new ApiError(400,'Waypoints need unique IDs and valid coordinates.','INVALID_ROUTE');ids.add(w.id);return {id:w.id,lat:w.lat,lng:w.lng,kind:typeof w.kind==='string'?w.kind.slice(0,40):'waypoint',...(typeof w.label==='string'&&w.label.trim()?{label:w.label.trim().slice(0,160)}:{})}});
  const g=x.geometry;if(!g||g.type!=='LineString'||!Array.isArray(g.coordinates)||g.coordinates.length<2||g.coordinates.length>100000||g.coordinates.some(c=>!Array.isArray(c)||c.length!==2||!coordinate(c[0],c[1])))throw new ApiError(400,'A valid GeoJSON LineString is required.','INVALID_ROUTE');
  if(!Number.isFinite(x.distanceMeters)||x.distanceMeters<=0||x.distanceMeters>2000000||!Number.isFinite(x.durationMinutes)||x.durationMinutes<=0||x.durationMinutes>100000)throw new ApiError(400,'Distance and duration must be positive.','INVALID_ROUTE');
  if(!['private','unlisted','public'].includes(x.visibility))throw new ApiError(400,'Invalid visibility.','INVALID_ROUTE');

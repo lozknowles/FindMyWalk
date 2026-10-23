@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       coordinates.push(...(coordinates.length ? decoded.slice(1) : decoded));
     }
     if (coordinates.length < 2) throw new Error('Empty route');
-    return NextResponse.json({ geometry: { type: 'LineString', coordinates }, distanceMeters: Math.round(trip.summary.length * 1000), durationMinutes: Math.round(trip.summary.time / 60), source: 'valhalla-pedestrian', warnings: ['Mapped paths do not establish public rights of way or current safety.'] });
+    return NextResponse.json({ geometry: { type: 'LineString', coordinates }, distanceMeters: Math.max(1,Math.round(trip.summary.length * 1000)), durationMinutes: Math.max(1,Math.round(trip.summary.time / 60)), source: 'valhalla-pedestrian', warnings: ['Mapped paths do not establish public rights of way or current safety.'] });
   } catch {
     return NextResponse.json({ error: 'Pedestrian routing is temporarily unavailable', code: 'ROUTING_UNAVAILABLE' }, { status: 503 });
   }
