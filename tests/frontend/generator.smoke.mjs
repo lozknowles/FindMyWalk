@@ -25,12 +25,16 @@ try{
  assert.ok(lengths.every((length,index)=>index===0||length>lengths[index-1]));
  assert.ok(data.routes.every(route=>route.facilityStatus==='available'));
  assert.ok(data.routes.some(route=>route.facilities.counts.pub+route.facilities.counts.cafe>0));
+ assert.ok(data.routes.some(route=>route.facilities.nearbyPlaces?.some(place=>place.name==='Beyond Coffee')&&route.facilities.nearbyPlaces?.some(place=>place.name==='The Allotment')),'Collingham generation should include both separate local cafe listings');
  const fifth=data.routes[4];
  await page.locator('.auto-results article').last().getByRole('button',{name:'Show on map'}).click();
  await page.getByLabel('Walk title').waitFor();
  assert.equal(await page.getByLabel('Walk title').inputValue(),fifth.title);
  await page.getByText('Mapped places near this walk',{exact:true}).first().waitFor();
  await page.locator('.nearby-facilities .facility-counts').waitFor();
+ await page.getByText('Also in Collingham · approximate locations').waitFor();
+ await page.getByText('Beyond Coffee',{exact:true}).first().waitFor();
+ await page.getByText('The Allotment',{exact:true}).first().waitFor();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.screenshot({path:'/tmp/fmw-generator-mobile.png',fullPage:true});
  const gpxDownload=page.waitForEvent('download');
