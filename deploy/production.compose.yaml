@@ -55,6 +55,7 @@ services:
       PUBLIC_ORIGIN: https://findmywalk.com
       VALHALLA_URL: http://routing:8002
       WRITES_ENABLED: ${WRITES_ENABLED:-true}
+      ARCGIS_STATIC_MAPS_KEY: ${ARCGIS_STATIC_MAPS_KEY:-}
     ports:
       - "100.125.120.114:3110:3000"
     read_only: true
