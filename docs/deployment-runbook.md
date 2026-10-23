@@ -1,6 +1,6 @@
 # Deployment and recovery runbook
 
-This is preparation for a controlled deployment, not authority to publish. The development instance binds database and routing ports to loopback. The public domain is unchanged.
+This document records the original isolated-host preparation workflow. The FindMyWalk Nottinghamshire beta is now live; use [the live beta runbook](live-beta-runbook.md) for current operations, backups and rollback. The development instance remains separate from production.
 
 ## Reproduce on an isolated host
 
@@ -20,6 +20,6 @@ Use `pg_dump -Fc` to a protected, encrypted backup destination on a defined sche
 
 Monitor the app `/api/health`, PostgreSQL, Valhalla graph and route success, geocoder/provider errors, storage capacity, import age and TLS certificate. Distinguish an outside-coverage request from an outage. Limit logs to route IDs/status; avoid camera frames, exact GPS traces and tokens. Deploy by immutable revision. Keep the previous app image and compatible DB snapshot; schema changes need tested backward compatibility or a restore plan. Roll back app traffic first, then restore data only with an explicit reconciliation plan for writes since the backup.
 
-## Release gates
+## Release scope
 
-Before changing DNS or exposing FindMyWalk.com, verify external HTTPS origin and CSRF, mobile and physical-device permission flows, privacy/legal content, geographic coverage, account and moderation scope, provider terms, operational alerts, and a restore rehearsal. Obtain explicit approval for the public release.
+The 23 October 2026 release is a Nottinghamshire beta with anonymous browser-bound editing. See [the status report](status-2026-10-23.md) for public HTTPS acceptance evidence and outstanding master-mission work. Physical-device AR, account flows, broad coverage and external alerting remain open.
