@@ -9,4 +9,4 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app ./
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["npx", "next", "start", "--hostname", "0.0.0.0"]

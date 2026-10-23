@@ -23,3 +23,7 @@ The local Valhalla example builds a Nottinghamshire OSM extract in a dedicated D
 `compose.yaml` supplies an isolated PostGIS database bound to loopback; `Dockerfile` builds the application. Provide a TLS reverse proxy, dedicated routing instance, backups and a secret manager before public deployment. Back up the PostgreSQL volume with `pg_dump -Fc`; periodically restore to a separate database and run schema and route reads. Monitor `/api/health` and the routing/provider dependencies separately. No live DNS or service configuration is included here.
 
 See [architecture decision](docs/adr-001-foundation.md) for code reuse and licensing boundaries.
+
+## Visual asset
+
+`public/landscape-hero.jpg` is [Track in the Peak District - 10 June 2025](https://commons.wikimedia.org/wiki/File:Track_in_the_Peak_District_-_10_June_2025.jpg) by Aethonatic, CC0. The earlier illustrated asset remains in the source repository for reference.

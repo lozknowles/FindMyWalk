@@ -11,3 +11,7 @@ test-results/
 data/
 .venv-osm/
 dev.log
+__pycache__/
+*.pyc
+build.log
+prod.log

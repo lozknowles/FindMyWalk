@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "dev": "next dev --hostname 0.0.0.0",
+    "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start --hostname 0.0.0.0",
+    "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "for f in db/*.sql; do docker compose exec -T db psql -v ON_ERROR_STOP=1 -U findmywalk -d findmywalk < \"$f\" || exit; done"
+    "db:migrate": "for f in db/*.sql; do docker compose exec -T db psql -v ON_ERROR_STOP=1 -U findmywalk -d findmywalk < \"$f\" || exit; done",
+    "prebuild": "mkdir -p public/vendor && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs public/vendor/maplibre-gl-worker.mjs"
   },
   "keywords": [],
   "author": "",
