@@ -19,6 +19,7 @@ PLACE_AMENITIES = {'cafe', 'pub', 'toilets', 'restaurant', 'fast_food', 'drinkin
 PLACE_TOURISM = {'attraction', 'viewpoint', 'museum', 'gallery', 'information'}
 LANDMARK_NATURAL = {'peak', 'hill', 'ridge', 'waterfall', 'cave_entrance'}
 LANDMARK_MAN_MADE = {'tower', 'lighthouse', 'windmill'}
+PLACE_SETTLEMENT = {'city', 'town', 'village', 'hamlet', 'suburb', 'neighbourhood'}
 
 
 def classifications(tags):
@@ -27,6 +28,8 @@ def classifications(tags):
         rows.append(('place', tags['amenity']))
     elif tags.get('tourism') in PLACE_TOURISM:
         rows.append(('place', tags['tourism']))
+    elif tags.get('name') and tags.get('place') in PLACE_SETTLEMENT:
+        rows.append(('place', tags['place']))
     elif tags.get('name') and tags.get('shop'):
         rows.append(('place', 'shop'))
     elif tags.get('name') and tags.get('historic'):

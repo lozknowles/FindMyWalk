@@ -1,0 +1,58 @@
+name: findmywalk-production
+services:
+  db:
+    image: postgis/postgis@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: findmywalk
+      POSTGRES_USER: findmywalk
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:15433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U findmywalk -d findmywalk"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging: &logging
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+  routing:
+    image: ghcr.io/valhalla/valhalla-scripted@sha256:eaad372b8ef31e3e4592c442875aeb1375fbf5aeaa0d259b469e3b46583ab10d
+    restart: unless-stopped
+    environment:
+      tile_urls: https://download.geofabrik.de/europe/united-kingdom/england/nottinghamshire-latest.osm.pbf
+      server_threads: 2
+      build_elevation: "False"
+    ports:
+      - "127.0.0.1:18083:8002"
+    volumes:
+      - routing-data:/custom_files
+    logging: *logging
+  app:
+    image: ${FMW_IMAGE:?Set FMW_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      routing: {condition: service_started}
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: postgres://findmywalk:${POSTGRES_PASSWORD}@db:5432/findmywalk
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      PUBLIC_ORIGIN: https://findmywalk.com
+      VALHALLA_URL: http://routing:8002
+      WRITES_ENABLED: ${WRITES_ENABLED:-true}
+    ports:
+      - "100.125.120.114:3110:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt: [no-new-privileges:true]
+    logging: *logging
+volumes:
+  db-data:
+  routing-data:

@@ -19,11 +19,13 @@ export function origin(r:Request){
  }else{
   const url=new URL(r.url);trusted=r.headers.get('host')?url.protocol+'//'+r.headers.get('host'):url.origin;
  }
+ writesEnabled();
  const supplied=r.headers.get('origin');
- if(supplied&&supplied!==trusted)throw new ApiError(403,'Cross-origin writes are not allowed.','ORIGIN_REJECTED');
+ if(supplied!==trusted)throw new ApiError(403,'Cross-origin writes are not allowed.','ORIGIN_REJECTED');
 }
 export function coordinate(lng:unknown,lat:unknown){return typeof lng==='number'&&typeof lat==='number'&&Number.isFinite(lng)&&Number.isFinite(lat)&&Math.abs(lng)<=180&&Math.abs(lat)<=90}
 export function revision(v:unknown){if(typeof v!=='number'||!Number.isSafeInteger(v)||v<1)throw new ApiError(400,'A valid revision is required.','INVALID_REVISION');return v}
 export async function limitedText(r:Request,limit:number){if(!r.body)return '';const reader=r.body.getReader();const parts:Uint8Array[]=[];let length=0;while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>limit){await reader.cancel();throw new ApiError(413,'The uploaded file is too large.','TOO_LARGE')}parts.push(value)}return Buffer.concat(parts).toString('utf8')}
-export async function json(r:Request){try{return JSON.parse(await limitedText(r,6_000_000))}catch(e){if(e instanceof ApiError)throw e;throw new ApiError(400,'Invalid JSON.','INVALID_JSON')}}
+export function writesEnabled(){if(process.env.WRITES_ENABLED==='false')throw new ApiError(503,'Walk changes are temporarily paused.','WRITES_PAUSED')}
+export async function json(r:Request,limit=6_000_000){try{return JSON.parse(await limitedText(r,limit))}catch(e){if(e instanceof ApiError)throw e;throw new ApiError(400,'Invalid JSON.','INVALID_JSON')}}
 

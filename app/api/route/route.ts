@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {origin,json,failure,limitedText} from '../../../lib/server/core';
+import {admitRouting} from '../../../lib/server/resource-limits';
 
 type Coordinate = [number, number];
 
@@ -29,19 +31,21 @@ function decodePolyline6(encoded: string): Coordinate[] {
 }
 
 export async function POST(request: NextRequest) {
+  let release:(()=>void)|undefined;
+  try {
+  origin(request);
+  release=admitRouting();
   let waypoints: Coordinate[];
   try {
-    const body = await request.json();
-    waypoints = body.waypoints;
+    const body = await json(request,16_384);
+    waypoints = body?.waypoints;
     if (!Array.isArray(waypoints) || waypoints.length < 2 || waypoints.length > 25 ||
       waypoints.some((p) => !Array.isArray(p) || p.length !== 2 ||
         !Number.isFinite(p[0]) || !Number.isFinite(p[1]) ||
         Math.abs(p[0]) > 180 || Math.abs(p[1]) > 90)) {
       return NextResponse.json({ error: 'Provide 2 to 25 valid [longitude, latitude] waypoints', code: 'INVALID_WAYPOINTS' }, { status: 400 });
     }
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON', code: 'INVALID_JSON' }, { status: 400 });
-  }
+  } catch(e) { return failure(e); }
   const base = process.env.VALHALLA_URL;
   if (!base) {
     return NextResponse.json({ error: 'Pedestrian routing is not configured; use a clearly marked manual section', code: 'ROUTING_UNAVAILABLE' }, { status: 503 });
@@ -58,22 +62,25 @@ export async function POST(request: NextRequest) {
         signal: controller.signal,
         cache: 'no-store',
       });
-    } finally { clearTimeout(timeout); }
+
     if (!response.ok) {
       return NextResponse.json({ error: 'Pedestrian routing could not connect these waypoints', code: 'NO_PEDESTRIAN_ROUTE' }, { status: 422 });
     }
-    const data = await response.json();
+    const data = JSON.parse(await limitedText(response as unknown as Request,6_000_000));
     const trip = data?.trip;
     const legs = trip?.legs;
     if (!Array.isArray(legs) || !Number.isFinite(trip?.summary?.length) || !Number.isFinite(trip?.summary?.time)) throw new Error('Invalid routing response');
     const coordinates: Coordinate[] = [];
     for (const leg of legs) {
       const decoded = decodePolyline6(leg.shape);
+      if(coordinates.length+decoded.length>100001)throw new Error('Route geometry too large');
       coordinates.push(...(coordinates.length ? decoded.slice(1) : decoded));
     }
     if (coordinates.length < 2) throw new Error('Empty route');
     return NextResponse.json({ geometry: { type: 'LineString', coordinates }, distanceMeters: Math.max(1,Math.round(trip.summary.length * 1000)), durationMinutes: Math.max(1,Math.round(trip.summary.time / 60)), source: 'valhalla-pedestrian', warnings: ['Mapped paths do not establish public rights of way or current safety.'] });
+    } finally { clearTimeout(timeout); }
   } catch {
     return NextResponse.json({ error: 'Pedestrian routing is temporarily unavailable', code: 'ROUTING_UNAVAILABLE' }, { status: 503 });
   }
+  } catch(e) {return failure(e)} finally {release?.()}
 }

@@ -49,3 +49,11 @@ The primary owns decisions and implementation. Gates were invoked under the user
 **Finding:** the master mission remains incomplete. Material defects and gaps: Docker image copied local secrets before a .dockerignore; short walks could round to zero duration and fail save; AR has no pitch/roll/calibration; initial AR handoff could not add to an existing walk; GPX browser evidence was narrower than stated; Google adapter lacked fixtures. Other untested flows include physical AR alignment, return-to-route, full place filters/corridor, accounts and production operations.
 
 **Decision:** added .dockerignore and standalone non-root runtime, built and inspected the image for excluded state; fixed minimum route duration with a short-route API test; added existing-walk destination integration and browser coverage; expanded GPX/unauthorised browser coverage; added Google adapter fixture tests. Documentation now describes the horizontal overlay and remaining acceptance gaps. The review qualifies a partial build handoff, not completion of the full mission or public release.
+
+## Plan gate: controlled live Nottinghamshire beta
+
+**Trigger:** the user explicitly authorised continuing and pushing FindMyWalk live. The live domain was an Apache holding page on CottageServer; the tested application and regional services were development-only on hpubuntu.
+
+**Finding:** the partial master build can be released only as a clearly labelled Nottinghamshire beta. Public traffic requires a dedicated production stack and secrets, bounded routing and writes, unlisted sharing with abuse reporting, local or permitted provider search, honest AR limitations, backup/restore proof and HTTPS acceptance. The development worktree and database must not become production.
+
+**Decision:** adopted a separate production Compose stack on hpubuntu behind the existing CottageServer TLS gateway, with independent PostGIS and Valhalla volumes. The site defaults to private drafts and unlisted links; public publication is disabled by default. OpenFreeMap is used under its published public instance terms; place search uses the local OSM index. The static page is retained as the traffic rollback target. Cutover remains conditional on release-candidate tests, restore drill, completion review and external-origin checks.

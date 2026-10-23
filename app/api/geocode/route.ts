@@ -1,25 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server';
+import {ApiError,db,failure} from '../../../lib/server/core';
+import {admitDiscovery} from '../../../lib/server/resource-limits';
 
-export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get('q')?.trim();
-  if (!q || q.length < 2 || q.length > 100) return NextResponse.json({ error: 'Enter a place name or postcode (2–100 characters)', code: 'INVALID_QUERY' }, { status: 400 });
-  const base = process.env.PHOTON_URL;
-  if (!base) return NextResponse.json({ error: 'Location search is not configured', code: 'GEOCODER_UNAVAILABLE' }, { status: 503 });
-  try {
-    const url = new URL('/api', base);
-    url.searchParams.set('q', q);
-    url.searchParams.set('limit', '5');
-    const response = await fetch(url, { headers: { 'User-Agent': 'FindMyWalk/0.1 (findmywalk.com)', Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(8000) });
-    if (!response.ok) throw new Error('Geocoder failed');
-    const payload = await response.json();
-    const results = (Array.isArray(payload.features) ? payload.features : []).slice(0, 5).flatMap((feature: any) => {
-      const p = feature?.geometry?.coordinates;
-      if (!Array.isArray(p) || p.length !== 2 || !Number.isFinite(p[0]) || !Number.isFinite(p[1])) return [];
-      const a = feature.properties || {};
-      return [{ lng: p[0], lat: p[1], label: [a.name, a.city, a.state, a.country].filter(Boolean).filter((v: string, i: number, values: string[]) => values.indexOf(v) === i).join(', ') || q }];
-    });
-    return NextResponse.json({ results, source: 'OpenStreetMap/Photon', attribution: '© OpenStreetMap contributors' }, { headers: { 'Cache-Control': 'private, max-age=300' } });
-  } catch {
-    return NextResponse.json({ error: 'Location search is temporarily unavailable', code: 'GEOCODER_UNAVAILABLE' }, { status: 503 });
-  }
+export const runtime='nodejs';
+export const dynamic='force-dynamic';
+
+export async function GET(request:Request){
+ const q=new URL(request.url).searchParams.get('q')?.trim();
+ if(!q||q.length<2||q.length>100)return Response.json({error:'Enter a place or landmark name (2–100 characters)',code:'INVALID_QUERY'},{status:400});
+ let release:(()=>void)|undefined;
+ try{
+  release=admitDiscovery();
+  const {rows}=await db().query(
+   `SELECT name,ST_Y(location) AS lat,ST_X(location) AS lng,category
+      FROM osm_pois
+      WHERE name ILIKE '%' || $1 || '%' AND length(name)>1
+      ORDER BY CASE WHEN lower(name)=lower($1) THEN 0 ELSE 1 END,
+               CASE WHEN category IN ('city','town','village','hamlet','suburb','neighbourhood') THEN 0 ELSE 1 END,
+               CASE WHEN lower(name) LIKE lower($1)||'%' THEN 0 ELSE 1 END,
+               CASE WHEN family='place' THEN 0 ELSE 1 END,name
+      LIMIT 5`,[q.replace(/[\\%_]/g,'\\$&')]);
+  return Response.json({results:rows.map((row:{name:string;lat:number;lng:number;category:string})=>({label:row.name+' ('+row.category.replaceAll('_',' ')+')',lat:row.lat,lng:row.lng})),source:'Local OpenStreetMap extract',attribution:'© OpenStreetMap contributors',coverage:'Nottinghamshire only'},{headers:{'Cache-Control':'private, max-age=60'}});
+ }catch(e){
+  if(e instanceof ApiError)return failure(e);
+  return Response.json({error:'Location search is temporarily unavailable',code:'GEOCODER_UNAVAILABLE'},{status:503});
+ }finally{release?.()}
 }

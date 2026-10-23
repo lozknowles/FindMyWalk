@@ -8,9 +8,9 @@ try {
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const base=process.env.BASE_URL||'http://127.0.0.1:3108';
  await page.request.get(base+'/api/routes');
- const savedResponse=await page.request.post(base+'/api/routes',{data:{title:'AR existing walk fixture',description:'',waypoints:[{id:'start',lat:53.14,lng:-0.76,kind:'start'},{id:'finish',lat:53.141,lng:-0.761,kind:'finish'}],geometry:{type:'LineString',coordinates:[[-0.76,53.14],[-0.761,53.141]]},distanceMeters:130,durationMinutes:2,visibility:'private',geometrySource:'manual'}});
+ const savedResponse=await page.request.post(base+'/api/routes',{headers:{Origin:base},data:{title:'AR existing walk fixture',description:'',waypoints:[{id:'start',lat:53.14,lng:-0.76,kind:'start'},{id:'finish',lat:53.141,lng:-0.761,kind:'finish'}],geometry:{type:'LineString',coordinates:[[-0.76,53.14],[-0.761,53.141]]},distanceMeters:130,durationMinutes:2,visibility:'private',geometrySource:'manual'}});
  assert.equal(savedResponse.status(),201);const savedId=(await savedResponse.json()).route.id;
- await page.goto(base+'/ar');await page.getByRole('heading',{name:'AR Explorer',exact:true}).waitFor();
+ await page.goto(base+'/ar');await page.getByRole('heading',{name:/AR Explorer/}).waitFor();
  await page.getByText('Use coordinates if GPS is unavailable',{exact:true}).click();
  await page.getByLabel('Latitude',{exact:true}).fill('53.14');await page.getByLabel('Longitude',{exact:true}).fill('-0.76');await page.getByRole('button',{name:'Use on map',exact:true}).click();
  const places=page.waitForResponse(r=>r.url().includes('/api/places?'));await page.getByRole('button',{name:'Refresh nearby places',exact:true}).click();const response=await places;assert.equal(response.status(),200);
