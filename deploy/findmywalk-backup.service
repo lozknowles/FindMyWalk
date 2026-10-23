@@ -1,0 +1,10 @@
+[Unit]
+Description=FindMyWalk encrypted production database backup
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/fast/services/findmywalk/backup.sh
+TimeoutStartSec=15min

@@ -1,0 +1,42 @@
+{
+  "name": "findmywalk",
+  "version": "0.1.0",
+  "description": "Walking-route creation, discovery, sharing and approximate AR Explorer.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:browser": "node tests/frontend/smoke.mjs",
+    "test:ar-browser": "node tests/ar/browser.smoke.mjs",
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "for f in db/*.sql; do docker compose exec -T db psql -v ON_ERROR_STOP=1 -U findmywalk -d findmywalk < \"$f\" || exit; done",
+    "prebuild": "mkdir -p public/vendor && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs public/vendor/maplibre-gl-worker.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@types/geojson": "^7946.0.16",
+    "fast-xml-parser": "^5.11.2",
+    "lucide-react": "^1.61.0",
+    "maplibre-gl": "^6.15.0",
+    "next": "^16.4.2",
+    "pg": "^8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

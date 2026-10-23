@@ -1,0 +1,13 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import type {Map as LibreMap,Marker,GeoJSONSource} from 'maplibre-gl';
+import {Coordinate,Feature} from '../../lib/ar/projection';
+import styles from './ARExplorer.module.css';
+export default function ARMap({origin,features,route,onSelect}:{origin:Coordinate|null;features:Feature[];route:number[][];onSelect:(f:Feature)=>void}){
+ const element=useRef<HTMLDivElement>(null),map=useRef<LibreMap|null>(null),markers=useRef<Marker[]>([]);const [ready,setReady]=useState(false),[error,setError]=useState('');
+ useEffect(()=>{let disposed=false;import('maplibre-gl').then(lib=>{if(disposed||!element.current)return;lib.setWorkerUrl('/vendor/maplibre-gl-worker.mjs');const m=new lib.Map({container:element.current,style:process.env.NEXT_PUBLIC_MAP_STYLE_URL||'https://tiles.openfreemap.org/styles/liberty',center:[-.77,53.12],zoom:13});map.current=m;m.addControl(new lib.NavigationControl());m.on('error',()=>setError('Some map tiles could not load. Nearby places remain available in the list.'));m.on('load',()=>{m.addSource('ar-route',{type:'geojson',data:{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:[]}}});m.addLayer({id:'ar-route-line',type:'line',source:'ar-route',paint:{'line-color':'#dd8452','line-width':5}});setReady(true);});}).catch(()=>setError('Map unavailable. Use the nearby places list.'));return()=>{disposed=true;map.current?.remove();map.current=null;};},[]);
+ useEffect(()=>{if(ready&&origin)map.current?.flyTo({center:[origin.lng,origin.lat],zoom:15});},[origin,ready]);
+ useEffect(()=>{if(!ready)return;let disposed=false;import('maplibre-gl').then(lib=>{if(disposed||!map.current)return;markers.current.forEach(m=>m.remove());markers.current=[];if(origin)markers.current.push(new lib.Marker({color:'#dd8452'}).setLngLat([origin.lng,origin.lat]).addTo(map.current));for(const f of features.slice(0,100)){const el=document.createElement('button');el.className=styles.marker;el.textContent='•';el.setAttribute('aria-label',f.name);el.onclick=()=>onSelect(f);markers.current.push(new lib.Marker({element:el}).setLngLat([f.lng,f.lat]).addTo(map.current));}});return()=>{disposed=true;};},[features,origin,ready,onSelect]);
+ useEffect(()=>{if(!ready||!map.current)return;(map.current.getSource('ar-route') as GeoJSONSource)?.setData({type:'Feature',properties:{},geometry:{type:'LineString',coordinates:route}});if(route.length>1){const lngs=route.map(p=>p[0]),lats=route.map(p=>p[1]);map.current.fitBounds([[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],{padding:45});}},[route,ready]);
+ return <><div className={styles.map} ref={element} aria-label="Nearby mapped places and walking route"/>{error&&<p role="status">{error}</p>}</>;
+}
