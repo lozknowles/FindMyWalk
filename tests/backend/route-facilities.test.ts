@@ -1,10 +1,11 @@
 import {beforeEach,describe,it,expect,vi} from 'vitest';
-const {query}=vi.hoisted(()=>({query:vi.fn()}));
+const {query,nearby}=vi.hoisted(()=>({query:vi.fn(),nearby:vi.fn()}));
 vi.mock('../../lib/server/core',async()=>{const actual=await vi.importActual<typeof import('../../lib/server/core')>('../../lib/server/core');return {...actual,db:()=>({query})}});
+vi.mock('../../lib/server/route-nearby',()=>({discoverNearbyPlaces:nearby}));
 vi.mock('next/headers',()=>({cookies:vi.fn()}));
 import {routeFacilities} from '../../lib/server/route-facilities';
 const feature={osm_type:'node',osm_id:'1',name:'Mapped cafe',category:'cafe',lat:53.14,lng:-.86,distance_m:12,progress:.5};
-beforeEach(()=>query.mockReset());
+beforeEach(()=>{query.mockReset();nearby.mockReset();nearby.mockResolvedValue({places:[],status:'available',release:'2026-10-21.0'});});
 function rows(contact:Record<string,unknown>){query.mockResolvedValueOnce({rows:[{...feature,...contact}]}).mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-22'}]})}
 describe('mapped route contacts',()=>{
  it('retains bounded contacts and keeps the OSM source URL',async()=>{
@@ -24,28 +25,21 @@ describe('mapped route contacts',()=>{
  });
 });
 
-describe('reviewed Collingham cafe listings',()=>{
- const route:[number,number][]=[[-.76047,53.14499],[-.7608,53.14336]];
- it('shows both cafes separately without inflating the 100 m OSM count',async()=>{
-  query.mockResolvedValueOnce({rows:[{...feature,name:'Royal Oak',category:'pub',lat:53.144991,lng:-.760471,distance_m:13}]})
-   .mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
+describe('programmatic nearby discovery integration',()=>{
+ it('keeps the 100 m mapped count separate from routed food detours',async()=>{
+  rows({name:'Royal Oak',category:'pub'});
+  nearby.mockResolvedValueOnce({places:[{id:'overture:place-id',name:'A coffee shop',category:'cafe',group:'cafe',lat:53.14,lng:-.85,distanceMeters:210,progress:0,url:'https://docs.overturemaps.org/guides/places/',detourMeters:480,detourMinutes:6}],status:'available',release:'2026-10-21.0'});
+  const route:[number,number][]=[[-.86,53.14],[-.85,53.15]];
   const result=await routeFacilities(route);
-  expect(result.counts).toMatchObject({pub:1,cafe:0});
-  expect(result.nearbyPlaces?.map(place=>place.name)).toEqual(['Beyond Coffee','The Allotment']);
-  expect(result.nearbyPlaces?.map(place=>place.positionQuality)).toEqual(['approximate','site']);
-  expect(result.nearbyPlaces?.every(place=>place.source==='collingham-guide'&&Boolean(place.sourceUrl))).toBe(true);
+  expect(nearby).toHaveBeenCalledWith(route,result.places,undefined);
+  expect(result.nearbyPlaces?.[0]).toMatchObject({name:'A coffee shop',detourMeters:480});
+  expect(result.nearbyRelease).toBe('2026-10-21.0');
+  expect(result.counts.cafe).toBe(0);
+ });
+ it('reports a secondary provider outage separately from mapped route counts',async()=>{
+  rows({});nearby.mockResolvedValueOnce({places:[],status:'unavailable',release:null});
+  const result=await routeFacilities([[-.86,53.14],[-.85,53.15]]);
   expect(result.places).toHaveLength(1);
- });
- it('suppresses a local listing when the same cafe is mapped at the same site',async()=>{
-  query.mockResolvedValueOnce({rows:[{...feature,name:'Beyond Coffee',category:'cafe',lat:53.145808,lng:-.76015,distance_m:55}]})
-   .mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
-  const result=await routeFacilities(route);
-  expect(result.counts.cafe).toBe(1);
-  expect(result.nearbyPlaces?.map(place=>place.name)).toEqual(['The Allotment']);
- });
- it('does not show Collingham listings on a route elsewhere',async()=>{
-  query.mockResolvedValueOnce({rows:[]}).mockResolvedValueOnce({rows:[{covered:true,source_timestamp:'2026-10-20'}]});
-  const result=await routeFacilities([[-1.2,53.1],[-1.19,53.11]]);
-  expect(result.nearbyPlaces).toEqual([]);
+  expect(result.nearbyStatus).toBe('unavailable');
  });
 });

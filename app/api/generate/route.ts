@@ -34,10 +34,15 @@ export async function POST(request:Request){
    return Boolean(result.rows[0]?.covered);
   };
   const result=await generateWalks(start,(label||'Starting point').trim()||'Starting point',shortestKm,count,{covers,signal:deadline.signal});
+  const enrichment=new AbortController();
+  const stopEnrichment=()=>enrichment.abort();
+  deadline.signal.addEventListener('abort',stopEnrichment,{once:true});
+  const enrichmentTimer=setTimeout(stopEnrichment,8000);
   const enriched=await Promise.all(result.routes.map(async(route:GeneratedWalk)=>{
-   try{if(deadline.signal.aborted)throw new Error('Deadline exceeded');return {...route,facilities:await routeFacilities(route.geometry.coordinates),facilityStatus:'available' as const,warnings:[...route.warnings,'Generated suggestions have not been inspected for access, closures, terrain or suitability.']}}
+   try{if(deadline.signal.aborted)throw new Error('Deadline exceeded');return {...route,facilities:await routeFacilities(route.geometry.coordinates,100,enrichment.signal),facilityStatus:'available' as const,warnings:[...route.warnings,'Generated suggestions have not been inspected for access, closures, terrain or suitability.']}}
    catch{return {...route,facilityStatus:'unavailable' as const,warnings:[...route.warnings,'Nearby map facilities could not be loaded.']}}
   }));
+  clearTimeout(enrichmentTimer);deadline.signal.removeEventListener('abort',stopEnrichment);
   return Response.json({...result,routes:enriched,coverage:'Nottinghamshire only',attribution:'© OpenStreetMap contributors'},{
    headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'}
   });
