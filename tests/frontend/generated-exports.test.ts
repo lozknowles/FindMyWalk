@@ -160,7 +160,13 @@ describe('generated route exports', () => {
       width: 600, height: 400, precomposed: true, attribution: 'Fixture satellite provider',
     };
     const withLocal = { ...route, facilities: {
-      counts: { pub: 2, cafe: 0, landmark: 0 }, places: [],
+      counts: { pub: 5, cafe: 0, landmark: 0 }, places: [
+        { id:'osm:oak',name:'Royal Oak',lat:53.101,lng:-.749,category:'pub' },
+        { id:'osm:kings',name:"King's Head",lat:53.102,lng:-.748,category:'pub' },
+        { id:'osm:three',name:'Pub Three',lat:53.103,lng:-.747,category:'pub' },
+        { id:'osm:four',name:'Pub Four',lat:53.104,lng:-.746,category:'pub' },
+        { id:'osm:five',name:'Pub Five',lat:53.105,lng:-.745,category:'pub' },
+      ],
       nearbyPlaces: [
         { id:'collingham:beyond-coffee',name:'Beyond Coffee',lat:53.145808,lng:-.76015,address:'High Street, Collingham',positionQuality:'approximate' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/beyond',statusNote:'Confirm entrance and opening.' },
         { id:'collingham:the-allotment',name:'The Allotment',lat:53.14502,lng:-.749303,address:'Gusto House, Collingham',positionQuality:'site' as const,verifiedAt:'2026-10-23',sourceUrl:'https://example.test/allotment',statusNote:'Site point, not entrance.' },
@@ -175,6 +181,10 @@ describe('generated route exports', () => {
     expect(satellite).toContain('Beyond Coffee');
     expect(satellite).toContain('The Allotment');
     expect(satellite).toContain('Confirm entrance and opening.');
+    expect(satellite).toContain('Collingham listings continued');
+    const continuation = satellite.slice(satellite.indexOf('Collingham listings continued'));
+    expect(continuation.slice(0, continuation.indexOf('endstream'))).not.toContain('Numbering matches the satellite map');
+    expect(continuation).toContain('The Allotment');
   });
   it('supports precomposed adapter imagery, guide planning box, and only a verified saved-page QR', async () => {
     const image: GeneratedSatelliteImage = {

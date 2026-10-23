@@ -337,6 +337,7 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
     text('No.  Place / category', 40, tableY, 9);
     text('Mapped contact details', 285, tableY, 9);
     tableY -= 18;
+    let supplementalPage = false;
     const tableHeader = () => {
       commands.length = 0;
       text('FindMyWalk / mapped places continued', 40, 800, 18);
@@ -345,9 +346,17 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
       text('Mapped contact details', 285, 750, 9);
       tableY = 732;
     };
+    const supplementalHeader = () => {
+      commands.length = 0;
+      supplementalPage = true;
+      text('FindMyWalk / Collingham listings continued', 40, 800, 18);
+      text('Approximate guide positions; not numbered on the satellite map.', 40, 777, 10);
+      tableY = 750;
+    };
     const footer = () => {
       wrap(proximity, 85).forEach((line, i) => text(line, 40, 78 - i * 11, 8));
-      text('Contacts are mapped source data; availability and opening are unverified.', 40, 49, 8);
+      text(supplementalPage ? 'Guide listings; entrance, access and opening are unverified.' :
+        'Contacts are mapped source data; availability and opening are unverified.', 40, 49, 8);
       text(attribution, 40, 32, 8);
     };
     if (!places.length) text('No mapped place details available; this does not mean none exist.', 40, tableY, 10);
@@ -373,7 +382,7 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
     }
     const supplemental = route.facilities?.nearbyPlaces || [];
     if (supplemental.length) {
-      if (tableY < 175) { footer(); addPage(); tableHeader(); }
+      if (tableY < 175) { footer(); addPage(); supplementalHeader(); }
       text('Other Collingham cafe listings - approximate positions', 40, tableY, 10);
       tableY -= 16;
       text('Not numbered on the satellite map or included in the 100 m route count.', 40, tableY, 8);
@@ -384,9 +393,9 @@ export function generatedPdfBlob(route: GeneratedExportRoute, satellite?: Genera
           place.statusNote || 'Location and opening should be checked.',
           'Source checked ' + (place.verifiedAt || 'date unavailable') + ': ' + (place.sourceUrl || 'Collingham village guide'),
         ].flatMap(line => wrap(line, 84));
-        if (tableY < 110 + Math.min(lines.length - 1, 54) * 11) { footer(); addPage(); tableHeader(); }
+        if (tableY < 110 + Math.min(lines.length - 1, 54) * 11) { footer(); addPage(); supplementalHeader(); }
         for (const line of lines) {
-          if (tableY < 110) { footer(); addPage(); tableHeader(); }
+          if (tableY < 110) { footer(); addPage(); supplementalHeader(); }
           text(line, 40, tableY, 8);
           tableY -= 11;
         }
